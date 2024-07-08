@@ -1,0 +1,107 @@
+`timescale 1ns / 1ps
+
+module Universal_shift_register(
+input clk,
+input center,
+input up,
+input down,
+input left,
+input right,
+input [15:0]sw,
+output [6:0]seg,
+output [3:0]an,
+output reg [15:0]led
+    );
+
+reg right_on,left_on,center_on;   
+reg [31:0] counter=0;
+parameter max_count=100000000;
+
+reg [3:0] zeros,ones,twos,threes,fours=4'b0;
+
+initial
+begin
+    led <= 16'b0;
+end 
+
+Seven_segment_display SSD (clk, ones ,twos, threes, fours, seg, an);
+
+always @(posedge clk)
+begin
+    if (down)
+        begin
+            ones <= sw[3:0];
+            twos <= sw[7:4];
+            threes <= sw[11:8];
+            fours <= sw[15:12];
+        end
+    if (up)
+        begin
+            led[3:0] <= ones;
+            led[7:4] <= twos;
+            led[11:8] <= threes;
+            led[15:12] <= fours;
+        end
+    if (left)
+        begin
+            right_on<=0;
+            left_on<=1;
+            center_on<=0;
+        end
+        if (right)
+        begin
+            right_on<=1;
+            left_on<=0;
+            center_on<=0;     
+        end
+        if (center)
+        begin
+/*            if (counter<max_count)
+                    begin
+                        counter<=counter+1;
+                    end
+                else
+                    begin*/
+                        counter<=0;
+                        ones <= ones;
+                        twos <= twos;
+                        threes <= threes;
+                        fours <= fours;
+//                    end
+        end
+        while (left_on)
+            begin
+            if (counter<max_count)
+                    begin
+                        counter<=counter+1;
+                    end
+                else
+                    begin
+                        counter<=0;
+                        ones <= fours;
+                        fours <= threes;
+                        threes <=twos;
+                        twos <= ones;
+                        //ones <= zeros;
+                    end
+            end
+        while (right_on)
+            begin
+            if (counter<max_count)
+                    begin
+                        counter<=counter+1;
+                    end
+                else
+                    begin
+                        counter<=0;
+                        fours <= ones;
+                        ones <= twos;
+                        twos <=threes;
+                        threes <= fours;
+                        //fours <= zeros;
+                    end
+            end
+
+end
+
+endmodule
